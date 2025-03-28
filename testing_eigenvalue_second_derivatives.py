@@ -39,6 +39,8 @@ max_eig_loc = np.argmax(all_eig_vals)
 
 cond = np.linalg.cond(A_psd)
 
+print(A_psd_inv)
+
 residuals_det = []
 residuals_eig = []
 residuals_k = []
@@ -90,9 +92,13 @@ for i in range(test_size):
 
                 # Calculate eigenvalues and vectors (E-opt)
                 min_eig1, _ = get_eigenvalue_and_vector(A_psd_new_1, "min")
+                print(_)
                 min_eig2, _ = get_eigenvalue_and_vector(A_psd_new_2, "min")
+                print(_)
                 min_eig3, _ = get_eigenvalue_and_vector(A_psd_new_3, "min")
+                print(_)
                 min_eig4, _ = get_eigenvalue_and_vector(A_psd_new_4, "min")
+                print(_)
 
                 print(min_eig1, min_eig2, min_eig3, min_eig4)
 
@@ -119,6 +125,8 @@ for i in range(test_size):
                                   A_psd_inv[j, k] * A_psd_inv[l, i] +
                                   A_psd_inv[j, l] * A_psd_inv[k, i]
                 )
+
+                exact_det = -(A_psd_inv[i, l] * A_psd_inv[k, j])
 
                 # Eigenvalue formula comes from:
                 # https://cs.nyu.edu/~overton/papers/pdffiles/eighess.pdf
