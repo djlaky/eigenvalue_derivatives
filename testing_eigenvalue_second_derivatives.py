@@ -17,7 +17,7 @@ def get_eigenvalue_and_vector(M, option='min'):
     elif option == 'both':
         return vals[min_eig_loc], min_eig_vec, vals[max_eig_loc], max_eig_vec
 
-test_size = 2
+test_size = 3
 
 eps = 0.00001
 
@@ -126,12 +126,14 @@ for i in range(test_size):
                                   A_psd_inv[j, l] * A_psd_inv[k, i]
                 )
 
+                # Fixed the formula? Not sure why there's a 
+                # transpose on the inner elements.
                 exact_det = -(A_psd_inv[i, l] * A_psd_inv[k, j])
 
                 # Eigenvalue formula comes from:
                 # https://cs.nyu.edu/~overton/papers/pdffiles/eighess.pdf
                 # Which was rederived with help from Liviu
-                # 2 * sum[s != 0]((v_0^T dM/dMij v_s^T v_0^T dM/dMkl v_s^T) / (eig_val_0 - eig_val_s))
+                # 2 * sum[s != 0]((v_0^T dM/dMij v_s v_0^T dM/dMkl v_s) / (eig_val_0 - eig_val_s))
                 # Which when reduced will be...
                 # 2 * sum[s != 0]((v_0[i] * v_s[j] * v_0[k] * v_s[l]]) / (eig_val_0 - eig_val_s))
                 # Where the sum is over all other eigenvalues
@@ -141,10 +143,22 @@ for i in range(test_size):
                 for curr_eig in range(len(all_eig_vals)):
                     if curr_eig == min_eig_loc:
                         continue
+                    # exact_eig += 2 * (min_eig_vec[0, i] * 
+                    #                   all_eig_vecs[curr_eig, j] * 
+                    #                   min_eig_vec[0, k] * 
+                    #                   all_eig_vecs[curr_eig, l]) / (min_eig - all_eig_vals[curr_eig])
+                    # exact_eig += 1 * (min_eig_vec[0, j] * 
+                    #                   all_eig_vecs[curr_eig, i] * 
+                    #                   min_eig_vec[0, l] * 
+                    #                   all_eig_vecs[curr_eig, k]) / (min_eig - all_eig_vals[curr_eig])
                     exact_eig += 2 * (min_eig_vec[0, i] * 
-                                      all_eig_vecs[curr_eig, j] * 
+                                      all_eig_vecs[curr_eig, l] * 
                                       min_eig_vec[0, k] * 
-                                      all_eig_vecs[curr_eig, l]) / (min_eig - all_eig_vals[curr_eig])
+                                      all_eig_vecs[curr_eig, j]) / (min_eig - all_eig_vals[curr_eig])
+                    # exact_eig += 1 * (min_eig_vec[0, j] * 
+                    #                   all_eig_vecs[curr_eig, i] * 
+                    #                   min_eig_vec[0, l] * 
+                    #                   all_eig_vecs[curr_eig, k]) / (min_eig - all_eig_vals[curr_eig])
                 
                 # Condition number formula was derived by myself
                 # using product and chain rule and using the
@@ -226,7 +240,7 @@ for i in range(test_size):
                 ######################################
 
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt#
 
 print(residuals_det)
 print(residuals_eig)
