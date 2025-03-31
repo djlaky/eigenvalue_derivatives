@@ -17,7 +17,7 @@ def get_eigenvalue_and_vector(M, option='min'):
     elif option == 'both':
         return vals[min_eig_loc], min_eig_vec, vals[max_eig_loc], max_eig_vec
 
-test_size = 3
+test_size = 10
 
 eps = 0.00001
 
@@ -46,63 +46,54 @@ residuals_k = []
 # perturb each direction
 for i in range(test_size):
     for j in range(test_size):
-        for k in range(test_size):
-            for l in range(test_size):
-                # Make copies of A_psd to ensure
-                # value and not reference.....
-                A_psd_new_1 = copy.deepcopy(A_psd)
-                A_psd_new_2 = copy.deepcopy(A_psd)
-                A_psd_new_3 = copy.deepcopy(A_psd)
-                A_psd_new_4 = copy.deepcopy(A_psd)
+        # Make copies of A_psd to ensure
+        # value and not reference.....
+        A_psd_new_1 = copy.deepcopy(A_psd)
 
-                # Need 4 perturbations to cover the
-                # formula H[i, j] = [(A + eps (both))
-                # + (A +/- eps one each)
-                # + (A -/+ eps one each)
-                # + (A - eps (both))] / (4*eps**2)
-                A_psd_new_1[i, j] += eps
-                # A_psd_new_1[k, l] += eps
+        # Need 4 perturbations to cover the
+        # formula H[i, j] = [(A + eps (both))
+        # + (A +/- eps one each)
+        # + (A -/+ eps one each)
+        # + (A - eps (both))] / (4*eps**2)
+        A_psd_new_1[i, j] += eps
 
-                A_psd_new_2[i, j] += eps
-                A_psd_new_2[k, l] += -eps
+        # Calculate log-determinant for finite difference (D-opt)
+        _, det1 = np.linalg.slogdet(A_psd_new_1)
 
-                A_psd_new_3[i, j] += -eps
-                A_psd_new_3[k, l] += eps
+        # Calculate condition numbers for finite difference (ME-opt)
+        cond1 = np.linalg.cond(A_psd_new_1)
 
-                A_psd_new_4[i, j] += -eps
-                A_psd_new_4[k, l] += -eps
+        # Calculate eigenvalues and vectors (E-opt)
+        min_eig1, min_eig_vec1 = get_eigenvalue_and_vector(A_psd_new_1, "min")
+        
+        alternating_vec = np.asarray([(-1) ** q for q in range(test_size)])
 
-                # Calculate log-determinant for finite difference (D-opt)
-                _, det1 = np.linalg.slogdet(A_psd_new_1)
-                _, det2 = np.linalg.slogdet(A_psd_new_2)
-                _, det3 = np.linalg.slogdet(A_psd_new_3)
-                _, det4 = np.linalg.slogdet(A_psd_new_4)
+        RHS_vals = np.zeros(test_size)
 
-                # Calculate condition numbers for finite difference (ME-opt)
-                cond1 = np.linalg.cond(A_psd_new_1)
-                cond2 = np.linalg.cond(A_psd_new_2)
-                cond3 = np.linalg.cond(A_psd_new_3)
-                cond4 = np.linalg.cond(A_psd_new_4)
-
-                # Calculate eigenvalues and vectors (E-opt)
-                min_eig1, min_eig_vec1 = get_eigenvalue_and_vector(A_psd_new_1, "min")
-                min_eig2, _ = get_eigenvalue_and_vector(A_psd_new_2, "min")
-                min_eig3, _ = get_eigenvalue_and_vector(A_psd_new_3, "min")
-                min_eig4, _ = get_eigenvalue_and_vector(A_psd_new_4, "min")
-
-                # Checking eigenvector derivatives
-                exact_eig = np.zeros(test_size)
-                for curr_eig in range(len(all_eig_vals)):
-                    if curr_eig == min_eig_loc:
-                        continue
-                    exact_eig += (min_eig_vec[0, i] * all_eig_vecs[curr_eig, j]) * all_eig_vecs[curr_eig, :] / (min_eig - all_eig_vals[curr_eig])
-                
-                print("(i, j): ({}, {})".format(i, j))
-                print("Exact eigenvector derivative: ")
-                print(exact_eig)
-                print("\nF.D. eigenvector derivative: ")
-                print((min_eig_vec1 - min_eig_vec) / eps)
-                print("~~~~~~~~~~~")
+        # Checking eigenvector derivatives
+        exact_eig = np.zeros(test_size)
+        for curr_eig in range(len(all_eig_vals)):
+            if curr_eig == min_eig_loc:
+                continue
+            exact_eig += (min_eig_vec[0, j] * all_eig_vecs[i, curr_eig]) * all_eig_vecs[:, curr_eig] / (min_eig - all_eig_vals[curr_eig])
+            RHS_vals[curr_eig] = (min_eig_vec[0, j] * all_eig_vecs[i, curr_eig]) / (min_eig - all_eig_vals[curr_eig])
+        print("(i, j): ({}, {})".format(i, j))
+        print("Exact eigenvector derivative: ")
+        print(exact_eig)
+        print("\nF.D. eigenvector derivative: ")
+        print((min_eig_vec1 - min_eig_vec) / eps)
+        print("~~~~~~~~~~~")
+        
+        # Solving the linear system of equations to get what the alternating vector should be?
+        # print("RHS vals: ")
+        # print(RHS_vals)
+        # print("Eigenvectors transposed: ")
+        # print(all_eig_vecs.transpose())
+        x = np.linalg.solve(all_eig_vecs.transpose(), RHS_vals)
+        print("Derivative from solving linear system")
+        print(x)
+        print("Eigenvalues")
+        print(all_eig_vals)
 
 
 import matplotlib.pyplot as plt

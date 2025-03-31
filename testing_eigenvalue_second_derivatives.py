@@ -17,7 +17,7 @@ def get_eigenvalue_and_vector(M, option='min'):
     elif option == 'both':
         return vals[min_eig_loc], min_eig_vec, vals[max_eig_loc], max_eig_vec
 
-test_size = 3
+test_size = 2
 
 eps = 0.00001
 
@@ -44,6 +44,8 @@ print(A_psd_inv)
 residuals_det = []
 residuals_eig = []
 residuals_k = []
+
+count = 0
 
 # perturb each direction
 for i in range(test_size):
@@ -151,10 +153,14 @@ for i in range(test_size):
                     #                   all_eig_vecs[curr_eig, i] * 
                     #                   min_eig_vec[0, l] * 
                     #                   all_eig_vecs[curr_eig, k]) / (min_eig - all_eig_vals[curr_eig])
-                    exact_eig += 2 * (min_eig_vec[0, i] * 
-                                      all_eig_vecs[curr_eig, l] * 
+                    exact_eig += 1 * (min_eig_vec[0, i] * 
+                                      all_eig_vecs[j, curr_eig] * 
                                       min_eig_vec[0, k] * 
-                                      all_eig_vecs[curr_eig, j]) / (min_eig - all_eig_vals[curr_eig])
+                                      all_eig_vecs[l, curr_eig]) / (min_eig - all_eig_vals[curr_eig])
+                    exact_eig += 1 * (min_eig_vec[0, i] * 
+                                      all_eig_vecs[j, curr_eig] * 
+                                      min_eig_vec[0, k] * 
+                                      all_eig_vecs[l, curr_eig]) / (min_eig - all_eig_vals[curr_eig])
                     # exact_eig += 1 * (min_eig_vec[0, j] * 
                     #                   all_eig_vecs[curr_eig, i] * 
                     #                   min_eig_vec[0, l] * 
@@ -166,27 +172,27 @@ for i in range(test_size):
                 # Formula is very long, so I won't include it here
                 
                 # Term 1 is 1 / eig_0 ** 2 * deig_0/dMkl * deig_N/dMij
-                cond_term_1 = 1 / (min_eig ** 2) * (min_eig_vec[0, k] * min_eig_vec[0, l]) * (max_eig_vec[0, i] * max_eig_vec[0, j])
+                cond_term_1 = 1 / (min_eig ** 2) * (min_eig_vec[0, l] * min_eig_vec[0, k]) * (max_eig_vec[0, j] * max_eig_vec[0, i])
                 
                 # Term 2 is 1 / eig_0 * second_deriv_max_eig
                 exact_max_eig = 0
                 for curr_eig in range(len(all_eig_vals)):
                     if curr_eig == max_eig_loc:
                         continue
-                    exact_max_eig += 2 * (max_eig_vec[0, i] * 
-                                      all_eig_vecs[curr_eig][j] * 
-                                      max_eig_vec[0, k] * 
-                                      all_eig_vecs[curr_eig, l]) / (max_eig - all_eig_vals[curr_eig])
+                    exact_max_eig += 2 * (max_eig_vec[0, j] * 
+                                      all_eig_vecs[i, curr_eig] * 
+                                      max_eig_vec[0, l] * 
+                                      all_eig_vecs[k, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
 
                 cond_term_2 = 1 / min_eig * exact_max_eig
                 
                 # Term 3 is 1 / eig_0 * dcond/dMkl * deig_0/dMij
                 cond_term_3 = 1 / min_eig * (1 / min_eig * 
-                                             (max_eig_vec[0, k] * max_eig_vec[0, l] - 
-                                              cond * min_eig_vec[0, k] * min_eig_vec[0, l])) * (min_eig_vec[0, i] * min_eig_vec[0, j])
+                                             (max_eig_vec[0, l] * max_eig_vec[0, k] - 
+                                              cond * min_eig_vec[0, l] * min_eig_vec[0, k])) * (min_eig_vec[0, j] * min_eig_vec[0, i])
                 
                 # Term 4 is cond / eig_0 ** 2 * deig_0/dMkl * deig_0/dMij
-                cond_term_4 = cond / (min_eig ** 2) * (min_eig_vec[0, k] * min_eig_vec[0, l]) * (min_eig_vec[0, i] * min_eig_vec[0, j])
+                cond_term_4 = cond / (min_eig ** 2) * (min_eig_vec[0, l] * min_eig_vec[0, k]) * (min_eig_vec[0, j] * min_eig_vec[0, i])
 
                 # Term 5 is cond / eig_0 * second_deriv_min_eig <-- already computed as "exact_eig"
                 cond_term_5 = cond / min_eig * exact_eig
@@ -200,7 +206,8 @@ for i in range(test_size):
                 #####################################
                 # Calculating the residuals!
 
-                print("\n\nIteration ({}, {}, {}, {})\n\n".format(i, j, k, l))
+                print("\n\nIteration ({}, {}, {}, {})".format(i, j, k, l))
+                print("Or: {}\n\n".format(count))
 
                 print(A_psd_new_1 - A_psd)
                 print(A_psd_new_2 - A_psd)
@@ -238,6 +245,8 @@ for i in range(test_size):
 
                 # End residual computation!!!
                 ######################################
+                
+                count += 1
 
 
 import matplotlib.pyplot as plt#
