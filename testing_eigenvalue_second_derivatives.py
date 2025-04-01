@@ -19,7 +19,7 @@ def get_eigenvalue_and_vector(M, option='min'):
 
 test_size = 2
 
-eps = 0.00001
+eps = 0.0001
 
 np.random.seed(1022)
 
@@ -187,23 +187,23 @@ for i in range(test_size):
                                       # all_eig_vecs[j, curr_eig] * 
                                       # max_eig_vec[0, k] * 
                                       # all_eig_vecs[l, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
-                    # exact_max_eig += 1 * (max_eig_vec[0, j] * 
-                                      # all_eig_vecs[i, curr_eig] * 
-                                      # max_eig_vec[0, l] * 
-                                      # all_eig_vecs[k, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
-                    # exact_max_eig += 1 * (max_eig_vec[0, i] * 
-                                      # all_eig_vecs[j, curr_eig] * 
-                                      # max_eig_vec[0, k] * 
-                                      # all_eig_vecs[l, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
-                    # Somehow the derivative is not correct, maybe?
-                    exact_max_eig += 1 * (max_eig_vec[0, i] * 
-                                      all_eig_vecs[j, curr_eig] * 
+                    exact_max_eig += 1 * (max_eig_vec[0, j] * 
+                                      all_eig_vecs[i, curr_eig] * 
                                       max_eig_vec[0, l] * 
                                       all_eig_vecs[k, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
-                    exact_max_eig += 1 * (max_eig_vec[0, k] * 
-                                      all_eig_vecs[i, curr_eig] * 
-                                      max_eig_vec[0, j] * 
+                    exact_max_eig += 1 * (max_eig_vec[0, i] * 
+                                      all_eig_vecs[j, curr_eig] * 
+                                      max_eig_vec[0, k] * 
                                       all_eig_vecs[l, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
+                    # Somehow the derivative is not correct, maybe?
+                    # exact_max_eig += 1 * (max_eig_vec[0, i] * 
+                                      # all_eig_vecs[j, curr_eig] * 
+                                      # max_eig_vec[0, l] * 
+                                      # all_eig_vecs[k, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
+                    # exact_max_eig += 1 * (max_eig_vec[0, k] * 
+                                      # all_eig_vecs[i, curr_eig] * 
+                                      # max_eig_vec[0, j] * 
+                                      # all_eig_vecs[l, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
 
                 cond_term_2 = 1 / min_eig * exact_max_eig
                 
@@ -211,12 +211,19 @@ for i in range(test_size):
                 cond_term_3 = 1 / min_eig * (1 / min_eig * 
                                              (max_eig_vec[0, l] * max_eig_vec[0, k] - 
                                               cond * min_eig_vec[0, l] * min_eig_vec[0, k])) * (min_eig_vec[0, j] * min_eig_vec[0, i])
+                # Trying new term 3, 4, 5
+                # New term 3
+                cond_term_3 = 1 / (min_eig ** 2) * (max_eig_vec[0, l] * max_eig_vec[0, k]) * (min_eig_vec[0, j] * min_eig_vec[0, i])
                 
                 # Term 4 is cond / eig_0 ** 2 * deig_0/dMkl * deig_0/dMij
                 cond_term_4 = cond / (min_eig ** 2) * (min_eig_vec[0, l] * min_eig_vec[0, k]) * (min_eig_vec[0, j] * min_eig_vec[0, i])
+                # New term 4
+                cond_term_4 = 2 * max_eig / (min_eig ** 3) * (min_eig_vec[0, l] * min_eig_vec[0, k]) * (min_eig_vec[0, j] * min_eig_vec[0, i])
 
                 # Term 5 is cond / eig_0 * second_deriv_min_eig <-- already computed as "exact_eig"
                 cond_term_5 = cond / min_eig * exact_eig
+                # New term 5
+                cond_term_5 = max_eig / (min_eig ** 2) * exact_eig
 
                 # Combine everything at the end
                 exact_cond = -cond_term_1 + cond_term_2 - cond_term_3 + cond_term_4 - cond_term_5
@@ -270,11 +277,7 @@ for i in range(test_size):
                 count += 1
 
 
-import matplotlib.pyplot as plt#
-
-print(residuals_det)
-print(residuals_eig)
-print(residuals_k)
+import matplotlib.pyplot as plt
 
 plt.plot(range(len(residuals_det)), np.log(abs(np.array(residuals_det))), color='orange', label='Difference from \'exact\' to F.D. (log det)')
 plt.plot(range(len(residuals_det)), np.log(abs(np.array(residuals_eig))), color='black', label='Difference from \'exact\' to F.D. (Min Eig)')
