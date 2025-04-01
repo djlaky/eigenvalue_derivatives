@@ -145,26 +145,25 @@ for i in range(test_size):
                 for curr_eig in range(len(all_eig_vals)):
                     if curr_eig == min_eig_loc:
                         continue
-                    # exact_eig += 2 * (min_eig_vec[0, i] * 
-                    #                   all_eig_vecs[curr_eig, j] * 
-                    #                   min_eig_vec[0, k] * 
-                    #                   all_eig_vecs[curr_eig, l]) / (min_eig - all_eig_vals[curr_eig])
+                    # Originally thought it would be this based on
+                    # Conventions for eigenvector derivatives
+                    # However it changed to a transposed version...
                     # exact_eig += 1 * (min_eig_vec[0, j] * 
-                    #                   all_eig_vecs[curr_eig, i] * 
-                    #                   min_eig_vec[0, l] * 
-                    #                   all_eig_vecs[curr_eig, k]) / (min_eig - all_eig_vals[curr_eig])
+                                      # all_eig_vecs[i, curr_eig] * 
+                                      # min_eig_vec[0, l] * 
+                                      # all_eig_vecs[k, curr_eig]) / (min_eig - all_eig_vals[curr_eig])
+                    # exact_eig += 1 * (min_eig_vec[0, i] * 
+                                      # all_eig_vecs[j, curr_eig] * 
+                                      # min_eig_vec[0, k] * 
+                                      # all_eig_vecs[l, curr_eig]) / (min_eig - all_eig_vals[curr_eig])
                     exact_eig += 1 * (min_eig_vec[0, i] * 
                                       all_eig_vecs[j, curr_eig] * 
-                                      min_eig_vec[0, k] * 
+                                      min_eig_vec[0, l] * 
+                                      all_eig_vecs[k, curr_eig]) / (min_eig - all_eig_vals[curr_eig])
+                    exact_eig += 1 * (min_eig_vec[0, k] * 
+                                      all_eig_vecs[i, curr_eig] * 
+                                      min_eig_vec[0, j] * 
                                       all_eig_vecs[l, curr_eig]) / (min_eig - all_eig_vals[curr_eig])
-                    exact_eig += 1 * (min_eig_vec[0, i] * 
-                                      all_eig_vecs[j, curr_eig] * 
-                                      min_eig_vec[0, k] * 
-                                      all_eig_vecs[l, curr_eig]) / (min_eig - all_eig_vals[curr_eig])
-                    # exact_eig += 1 * (min_eig_vec[0, j] * 
-                    #                   all_eig_vecs[curr_eig, i] * 
-                    #                   min_eig_vec[0, l] * 
-                    #                   all_eig_vecs[curr_eig, k]) / (min_eig - all_eig_vals[curr_eig])
                 
                 # Condition number formula was derived by myself
                 # using product and chain rule and using the
@@ -179,10 +178,32 @@ for i in range(test_size):
                 for curr_eig in range(len(all_eig_vals)):
                     if curr_eig == max_eig_loc:
                         continue
-                    exact_max_eig += 2 * (max_eig_vec[0, j] * 
-                                      all_eig_vecs[i, curr_eig] * 
+                    # Trying the old transpose for Condition number?
+                    # exact_max_eig += 1 * (max_eig_vec[0, j] * 
+                                      # all_eig_vecs[i, curr_eig] * 
+                                      # max_eig_vec[0, l] * 
+                                      # all_eig_vecs[k, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
+                    # exact_max_eig += 1 * (max_eig_vec[0, i] * 
+                                      # all_eig_vecs[j, curr_eig] * 
+                                      # max_eig_vec[0, k] * 
+                                      # all_eig_vecs[l, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
+                    # exact_max_eig += 1 * (max_eig_vec[0, j] * 
+                                      # all_eig_vecs[i, curr_eig] * 
+                                      # max_eig_vec[0, l] * 
+                                      # all_eig_vecs[k, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
+                    # exact_max_eig += 1 * (max_eig_vec[0, i] * 
+                                      # all_eig_vecs[j, curr_eig] * 
+                                      # max_eig_vec[0, k] * 
+                                      # all_eig_vecs[l, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
+                    # Somehow the derivative is not correct, maybe?
+                    exact_max_eig += 1 * (max_eig_vec[0, i] * 
+                                      all_eig_vecs[j, curr_eig] * 
                                       max_eig_vec[0, l] * 
                                       all_eig_vecs[k, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
+                    exact_max_eig += 1 * (max_eig_vec[0, k] * 
+                                      all_eig_vecs[i, curr_eig] * 
+                                      max_eig_vec[0, j] * 
+                                      all_eig_vecs[l, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
 
                 cond_term_2 = 1 / min_eig * exact_max_eig
                 
