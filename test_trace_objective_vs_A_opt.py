@@ -34,14 +34,16 @@ for i in range(test_size):
         trace_new = np.trace(A_psd_new)
         trace_new_inv = np.trace(A_psd_new_inv)
 
-        residuals_trace.append((trace_A - trace_new) / eps)
-        residuals_trace_inv.append((trace_Ainv - trace_new_inv) / eps)
+        residuals_trace.append((trace_new - trace_A) / eps)
+        residuals_trace_inv.append((trace_new_inv - trace_Ainv) / eps)
 
 import matplotlib.pyplot as plt
 
 data = []
 for i in range(len(residuals_trace)):
     if np.sign(np.array(residuals_trace[i])) == -np.sign(np.array(residuals_trace_inv[i])):
+        print(np.sign(np.array(residuals_trace[i])))
+        print(np.sign(np.array(residuals_trace_inv[i])))
         data.append(1)
     elif min(np.array(residuals_trace[i]), 0) == 0 and min(np.array(residuals_trace_inv[i]), 0) < 0:
         data.append(0)
@@ -79,6 +81,8 @@ for i in range(test_size):
 data = []
 for i in range(len(residuals_trace)):
     if np.sign(np.array(residuals_trace[i])) == -np.sign(np.array(residuals_trace_inv[i])):
+        print(np.sign(np.array(residuals_trace[i])))
+        print(np.sign(np.array(residuals_trace_inv[i])))
         data.append(1)
     elif min(np.array(residuals_trace[i]), 0) == 0 and min(np.array(residuals_trace_inv[i]), 0) < 0:
         data.append(0)
