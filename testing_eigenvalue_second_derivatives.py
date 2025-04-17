@@ -27,6 +27,7 @@ A = np.random.rand(test_size, test_size)
 A_psd = np.dot(A, A.transpose())  # Positive semidefinte matrix A_psd
 
 A_psd_inv = np.linalg.pinv(A_psd)
+A_psd_inv_sq = A_psd_inv @ A_psd_inv
 
 print(A_psd)
 
@@ -39,11 +40,14 @@ max_eig_loc = np.argmax(all_eig_vals)
 
 cond = np.linalg.cond(A_psd)
 
+trace_inv = np.trace(A_psd_inv)
+
 print(A_psd_inv)
 
 residuals_det = []
 residuals_eig = []
 residuals_k = []
+residuals_trace = []
 
 count = 0
 
@@ -104,12 +108,23 @@ for i in range(test_size):
 
                 print(min_eig1, min_eig2, min_eig3, min_eig4)
 
+                # Calculate trace of inverse for finite difference (ME-opt)
+                inv1 = np.linalg.inv(A_psd_new_1)
+                trace1 = np.trace(inv1)
+                inv2 = np.linalg.inv(A_psd_new_2)
+                trace2 = np.trace(inv2)
+                inv3 = np.linalg.inv(A_psd_new_3)
+                trace3 = np.trace(inv3)
+                inv4 = np.linalg.inv(A_psd_new_4)
+                trace4 = np.trace(inv4)
+
 
                 #####################################
                 # Calculating the FD approximations 
                 hess_det = (det1 - det2 - det3 + det4) / (4 * eps**2)
                 hess_cond = (cond1 - cond2 - cond3 + cond4) / (4 * eps**2)
                 hess_eig = (min_eig1 - min_eig2 - min_eig3 + min_eig4) / (4 * eps**2)
+                hess_trace_inv = (trace1 - trace2 - trace3 + trace4) / (4 * eps**2)
 
                 #      End FD approximations
                 #####################################
@@ -197,13 +212,13 @@ for i in range(test_size):
                                       all_eig_vecs[l, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
                     # Somehow the derivative is not correct, maybe?
                     # exact_max_eig += 1 * (max_eig_vec[0, i] * 
-                                      # all_eig_vecs[j, curr_eig] * 
-                                      # max_eig_vec[0, l] * 
-                                      # all_eig_vecs[k, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
+                    #                   all_eig_vecs[j, curr_eig] * 
+                    #                   max_eig_vec[0, l] * 
+                    #                   all_eig_vecs[k, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
                     # exact_max_eig += 1 * (max_eig_vec[0, k] * 
-                                      # all_eig_vecs[i, curr_eig] * 
-                                      # max_eig_vec[0, j] * 
-                                      # all_eig_vecs[l, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
+                    #                   all_eig_vecs[i, curr_eig] * 
+                    #                   max_eig_vec[0, j] * 
+                    #                   all_eig_vecs[l, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
 
                 cond_term_2 = 1 / min_eig * exact_max_eig
                 
@@ -213,20 +228,33 @@ for i in range(test_size):
                                               cond * min_eig_vec[0, l] * min_eig_vec[0, k])) * (min_eig_vec[0, j] * min_eig_vec[0, i])
                 # Trying new term 3, 4, 5
                 # New term 3
-                cond_term_3 = 1 / (min_eig ** 2) * (max_eig_vec[0, l] * max_eig_vec[0, k]) * (min_eig_vec[0, j] * min_eig_vec[0, i])
+                #cond_term_3 = 1 / (min_eig ** 2) * (max_eig_vec[0, l] * max_eig_vec[0, k]) * (min_eig_vec[0, j] * min_eig_vec[0, i])
                 
                 # Term 4 is cond / eig_0 ** 2 * deig_0/dMkl * deig_0/dMij
                 cond_term_4 = cond / (min_eig ** 2) * (min_eig_vec[0, l] * min_eig_vec[0, k]) * (min_eig_vec[0, j] * min_eig_vec[0, i])
                 # New term 4
-                cond_term_4 = 2 * max_eig / (min_eig ** 3) * (min_eig_vec[0, l] * min_eig_vec[0, k]) * (min_eig_vec[0, j] * min_eig_vec[0, i])
+                #cond_term_4 = 2 * max_eig / (min_eig ** 3) * (min_eig_vec[0, l] * min_eig_vec[0, k]) * (min_eig_vec[0, j] * min_eig_vec[0, i])
 
                 # Term 5 is cond / eig_0 * second_deriv_min_eig <-- already computed as "exact_eig"
                 cond_term_5 = cond / min_eig * exact_eig
                 # New term 5
-                cond_term_5 = max_eig / (min_eig ** 2) * exact_eig
+                #cond_term_5 = max_eig / (min_eig ** 2) * exact_eig
 
                 # Combine everything at the end
                 exact_cond = -cond_term_1 + cond_term_2 - cond_term_3 + cond_term_4 - cond_term_5
+                print("Condiditon Number Term 1: ")
+                print(cond_term_1)
+                print("Condiditon Number Term 2: ")
+                print(cond_term_2)
+                print("Condiditon Number Term 3: ")
+                print(cond_term_3)
+                print("Condiditon Number Term 4: ")
+                print(cond_term_4)
+                print("Condiditon Number Term 5: ")
+                print(cond_term_5)
+
+                # Computing exact inverse trace
+                exact_trace_inv = (A_psd_inv[i, l] * A_psd_inv_sq[k, j] + A_psd_inv_sq[i, l] * A_psd_inv[k, j])
 
                 # End exact Hessian value computation
                 ######################################
@@ -257,10 +285,16 @@ for i in range(test_size):
                 print(exact_cond)
                 print("~~~~~~~~~~~~~")
 
+                print("Trace inverse (A-opt): ")
+                print(hess_trace_inv)
+                print(exact_trace_inv)
+                print("~~~~~~~~~~~~~")
+
 
                 residuals_det.append((exact_det - hess_det) / abs(exact_det))
                 residuals_eig.append((exact_eig - hess_eig) / abs(exact_eig))
                 residuals_k.append((exact_cond - hess_cond) / abs(exact_cond))
+                residuals_trace.append((exact_trace_inv - hess_trace_inv) / abs(exact_trace_inv))
 
                 # Maybe add printing tests
                 # Compare the FD value versus the "exact derivative"
@@ -282,9 +316,11 @@ import matplotlib.pyplot as plt
 plt.plot(range(len(residuals_det)), np.log(abs(np.array(residuals_det))), color='orange', label='Difference from \'exact\' to F.D. (log det)')
 plt.plot(range(len(residuals_det)), np.log(abs(np.array(residuals_eig))), color='black', label='Difference from \'exact\' to F.D. (Min Eig)')
 plt.plot(range(len(residuals_det)), np.log(abs(np.array(residuals_k))), color='green', label='Difference from \'exact\' to F.D. (Condition Number)')
+plt.plot(range(len(residuals_det)), np.log(abs(np.array(residuals_trace))), color='blue', label='Difference from \'exact\' to F.D. (A-opt)')
 print(np.log(abs(np.array(residuals_det))))
 print(np.log(abs(np.array(residuals_eig))))
 print(np.log(abs(np.array(residuals_k))))
+print(np.log(abs(np.array(residuals_trace))))
 plt.ylabel("log-10(relative error)", fontsize=20)
 plt.legend()
 plt.tight_layout()
