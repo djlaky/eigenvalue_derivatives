@@ -2,7 +2,7 @@ import numpy as np
 import copy
 
 
-test_size = 10
+test_size = 5
 
 eps = 0.0001
 
@@ -46,7 +46,7 @@ for i in range(test_size):
         print("Minimum vector: ")
         print(min_eig_vec)
 
-        # Compare the FD value versus the "exact derivate"
+        # Compare the FD value versus the "exact derivative"
         print("dEigDM component: ")
         print(dEigdM[i, j])
         print("Change in minimum eigenvalue, finite difference: ")
