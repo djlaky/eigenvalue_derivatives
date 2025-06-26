@@ -1,5 +1,6 @@
 import numpy as np
 import copy
+import itertools
 
 
 def get_eigenvalue_and_vector(M, option='min'):
@@ -17,14 +18,19 @@ def get_eigenvalue_and_vector(M, option='min'):
     elif option == 'both':
         return vals[min_eig_loc], min_eig_vec, vals[max_eig_loc], max_eig_vec
 
+permute = list(itertools.permutations([0, 1, 2, 3]))
+
 test_size = 2
 
-eps = 0.0001
+eps = 0.00001
 
 np.random.seed(1022)
 
 A = np.random.rand(test_size, test_size)
 A_psd = np.dot(A, A.transpose())  # Positive semidefinte matrix A_psd
+
+# Simple PSD matrix
+#A_psd = np.array([[3, 1], [1, 1]], dtype=float)
 
 A_psd_inv = np.linalg.pinv(A_psd)
 A_psd_inv_sq = A_psd_inv @ A_psd_inv
@@ -49,7 +55,10 @@ residuals_eig = []
 residuals_k = []
 residuals_trace = []
 
+bad_its = []
+
 count = 0
+count_bad_quads = 0
 
 # perturb each direction
 for i in range(test_size):
@@ -63,13 +72,18 @@ for i in range(test_size):
                 A_psd_new_3 = copy.deepcopy(A_psd)
                 A_psd_new_4 = copy.deepcopy(A_psd)
 
+                print(A_psd_new_4)
+                print(eps)
+
                 # Need 4 perturbations to cover the
                 # formula H[i, j] = [(A + eps (both))
                 # + (A +/- eps one each)
                 # + (A -/+ eps one each)
                 # + (A - eps (both))] / (4*eps**2)
-                A_psd_new_1[i, j] += eps
+                A_psd_new_1[i, j] = A_psd_new_1[i, j] + eps
                 A_psd_new_1[k, l] += eps
+
+                print(A_psd_new_1)
 
                 A_psd_new_2[i, j] += eps
                 A_psd_new_2[k, l] += -eps
@@ -97,16 +111,18 @@ for i in range(test_size):
                 print(cond1, cond2, cond3, cond4)
 
                 # Calculate eigenvalues and vectors (E-opt)
-                min_eig1, _ = get_eigenvalue_and_vector(A_psd_new_1, "min")
+                min_eig1, _, max_eig1, _ = get_eigenvalue_and_vector(A_psd_new_1, "both")
                 print(_)
-                min_eig2, _ = get_eigenvalue_and_vector(A_psd_new_2, "min")
+                min_eig2, _, max_eig2, _ = get_eigenvalue_and_vector(A_psd_new_2, "both")
                 print(_)
-                min_eig3, _ = get_eigenvalue_and_vector(A_psd_new_3, "min")
+                min_eig3, _, max_eig3, _ = get_eigenvalue_and_vector(A_psd_new_3, "both")
                 print(_)
-                min_eig4, _ = get_eigenvalue_and_vector(A_psd_new_4, "min")
+                min_eig4, _, max_eig4, _ = get_eigenvalue_and_vector(A_psd_new_4, "both")
                 print(_)
 
                 print(min_eig1, min_eig2, min_eig3, min_eig4)
+
+                print(max_eig1/min_eig1, max_eig2/min_eig2, max_eig3/min_eig3, max_eig4/min_eig4)
 
                 # Calculate trace of inverse for finite difference (ME-opt)
                 inv1 = np.linalg.inv(A_psd_new_1)
@@ -194,64 +210,64 @@ for i in range(test_size):
                     if curr_eig == max_eig_loc:
                         continue
                     # Trying the old transpose for Condition number?
-                    # exact_max_eig += 1 * (max_eig_vec[0, j] * 
-                                      # all_eig_vecs[i, curr_eig] * 
-                                      # max_eig_vec[0, l] * 
-                                      # all_eig_vecs[k, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
-                    # exact_max_eig += 1 * (max_eig_vec[0, i] * 
-                                      # all_eig_vecs[j, curr_eig] * 
-                                      # max_eig_vec[0, k] * 
-                                      # all_eig_vecs[l, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
-                    exact_max_eig += 1 * (max_eig_vec[0, j] * 
-                                      all_eig_vecs[i, curr_eig] * 
-                                      max_eig_vec[0, l] * 
-                                      all_eig_vecs[k, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
-                    exact_max_eig += 1 * (max_eig_vec[0, i] * 
-                                      all_eig_vecs[j, curr_eig] * 
-                                      max_eig_vec[0, k] * 
-                                      all_eig_vecs[l, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
-                    # Somehow the derivative is not correct, maybe?
-                    # exact_max_eig += 1 * (max_eig_vec[0, i] * 
-                    #                   all_eig_vecs[j, curr_eig] * 
-                    #                   max_eig_vec[0, l] * 
+                    # exact_max_eig += 1 * (max_eig_vec[0, j] *
+                    #                   all_eig_vecs[i, curr_eig] *
+                    #                   max_eig_vec[0, l] *
                     #                   all_eig_vecs[k, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
-                    # exact_max_eig += 1 * (max_eig_vec[0, k] * 
-                    #                   all_eig_vecs[i, curr_eig] * 
-                    #                   max_eig_vec[0, j] * 
+                    # exact_max_eig += 1 * (max_eig_vec[0, i] *
+                    #                   all_eig_vecs[j, curr_eig] *
+                    #                   max_eig_vec[0, k] *
                     #                   all_eig_vecs[l, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
+                    # exact_max_eig += 1 * (max_eig_vec[0, j] *
+                    #                   all_eig_vecs[i, curr_eig] *
+                    #                   max_eig_vec[0, l] *
+                    #                   all_eig_vecs[k, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
+                    # exact_max_eig += 1 * (max_eig_vec[0, i] *
+                    #                   all_eig_vecs[j, curr_eig] *
+                    #                   max_eig_vec[0, k] *
+                    #                   all_eig_vecs[l, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
+                    # Trying some random stuff
+                    # exact_max_eig += 1 * (max_eig_vec[0, j] *
+                    #                       all_eig_vecs[j, curr_eig] *
+                    #                       max_eig_vec[0, l] *
+                    #                       all_eig_vecs[k, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
+                    # exact_max_eig += 1 * (max_eig_vec[0, i] *
+                    #                       all_eig_vecs[i, curr_eig] *
+                    #                       max_eig_vec[0, k] *
+                    #                       all_eig_vecs[l, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
+                    # Somehow the derivative is not correct, maybe?
+                    exact_max_eig += 1 * (max_eig_vec[0, i] *
+                                          all_eig_vecs[j, curr_eig] *
+                                          max_eig_vec[0, l] *
+                                          all_eig_vecs[k, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
+                    exact_max_eig += 1 * (max_eig_vec[0, k] *
+                                          all_eig_vecs[i, curr_eig] *
+                                          max_eig_vec[0, j] *
+                                          all_eig_vecs[l, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
 
                 cond_term_2 = 1 / min_eig * exact_max_eig
                 
                 # Term 3 is 1 / eig_0 * dcond/dMkl * deig_0/dMij
-                cond_term_3 = 1 / min_eig * (1 / min_eig * 
-                                             (max_eig_vec[0, l] * max_eig_vec[0, k] - 
-                                              cond * min_eig_vec[0, l] * min_eig_vec[0, k])) * (min_eig_vec[0, j] * min_eig_vec[0, i])
+                # cond_term_3 = 1 / min_eig * (1 / min_eig *
+                #                              (max_eig_vec[0, l] * max_eig_vec[0, k] -
+                #                               cond * min_eig_vec[0, l] * min_eig_vec[0, k])) * (min_eig_vec[0, j] * min_eig_vec[0, i])
                 # Trying new term 3, 4, 5
                 # New term 3
-                #cond_term_3 = 1 / (min_eig ** 2) * (max_eig_vec[0, l] * max_eig_vec[0, k]) * (min_eig_vec[0, j] * min_eig_vec[0, i])
+                cond_term_3 = 1 / (min_eig ** 2) * (max_eig_vec[0, l] * max_eig_vec[0, k]) * (min_eig_vec[0, j] * min_eig_vec[0, i])
                 
                 # Term 4 is cond / eig_0 ** 2 * deig_0/dMkl * deig_0/dMij
-                cond_term_4 = cond / (min_eig ** 2) * (min_eig_vec[0, l] * min_eig_vec[0, k]) * (min_eig_vec[0, j] * min_eig_vec[0, i])
+                # cond_term_4 = cond / (min_eig ** 2) * (min_eig_vec[0, l] * min_eig_vec[0, k]) * (min_eig_vec[0, j] * min_eig_vec[0, i])
                 # New term 4
-                #cond_term_4 = 2 * max_eig / (min_eig ** 3) * (min_eig_vec[0, l] * min_eig_vec[0, k]) * (min_eig_vec[0, j] * min_eig_vec[0, i])
+                cond_term_4 = 2 * max_eig / (min_eig ** 3) * (min_eig_vec[0, l] * min_eig_vec[0, k]) * (min_eig_vec[0, j] * min_eig_vec[0, i])
 
                 # Term 5 is cond / eig_0 * second_deriv_min_eig <-- already computed as "exact_eig"
-                cond_term_5 = cond / min_eig * exact_eig
+                # cond_term_5 = cond / min_eig * exact_eig
                 # New term 5
-                #cond_term_5 = max_eig / (min_eig ** 2) * exact_eig
+                cond_term_5 = max_eig / (min_eig ** 2) * exact_eig
 
                 # Combine everything at the end
+                #exact_cond = cond_term_1 + cond_term_2 + cond_term_3 + cond_term_4 + cond_term_5
                 exact_cond = -cond_term_1 + cond_term_2 - cond_term_3 + cond_term_4 - cond_term_5
-                print("Condiditon Number Term 1: ")
-                print(cond_term_1)
-                print("Condiditon Number Term 2: ")
-                print(cond_term_2)
-                print("Condiditon Number Term 3: ")
-                print(cond_term_3)
-                print("Condiditon Number Term 4: ")
-                print(cond_term_4)
-                print("Condiditon Number Term 5: ")
-                print(cond_term_5)
 
                 # Computing exact inverse trace
                 exact_trace_inv = (A_psd_inv[i, l] * A_psd_inv_sq[k, j] + A_psd_inv_sq[i, l] * A_psd_inv[k, j])
@@ -264,6 +280,9 @@ for i in range(test_size):
 
                 print("\n\nIteration ({}, {}, {}, {})".format(i, j, k, l))
                 print("Or: {}\n\n".format(count))
+
+                if np.log(np.abs((exact_cond - hess_cond) / exact_cond)) > -10:
+                    bad_its.append((i, j, k, l))
 
                 print(A_psd_new_1 - A_psd)
                 print(A_psd_new_2 - A_psd)
@@ -283,6 +302,47 @@ for i in range(test_size):
                 print("Condition number: ")
                 print(hess_cond)
                 print(exact_cond)
+                print("~~~~~~~~~~~~~")
+                print("Condiditon Number Term 1: ")
+                print(cond_term_1)
+                print("Condiditon Number Term 2: ")
+                print(cond_term_2)
+
+                diff = np.abs(exact_cond - hess_cond)
+
+                curr_quad = (i, j, k, l)
+                bad_quads = [(0, 1, 0, 1), (0, 1, 1, 0), (1, 0, 0, 1), (1, 0, 1, 0)]
+                bad_quad_maybe_fix = {0: [], 1: [], 2: [], 3: []}
+                if curr_quad in bad_quads:
+                    for order1 in permute:
+                        for order2 in permute:
+                            exact_max_eig_recalc = 0
+                            for curr_eig in range(len(all_eig_vals)):
+                                if curr_eig == max_eig_loc:
+                                    continue
+                                exact_max_eig_recalc += 1 * (max_eig_vec[0, curr_quad[order1[0]]] *
+                                                      all_eig_vecs[curr_quad[order1[1]], curr_eig] *
+                                                      max_eig_vec[0, curr_quad[order1[2]]] *
+                                                      all_eig_vecs[curr_quad[order1[3]], curr_eig]) / (
+                                                             max_eig - all_eig_vals[curr_eig])
+                                exact_max_eig_recalc += 1 * (max_eig_vec[0, curr_quad[order2[0]]] *
+                                                      all_eig_vecs[curr_quad[order2[1]], curr_eig] *
+                                                      max_eig_vec[0, curr_quad[order2[2]]] *
+                                                      all_eig_vecs[curr_quad[order2[3]], curr_eig]) / (
+                                                             max_eig - all_eig_vals[curr_eig])
+                            cond_term_2_recalc = 1 / min_eig * exact_max_eig_recalc
+                            if (np.abs(cond_term_2 - cond_term_2_recalc) > diff * 0.9) and (np.abs(cond_term_2 - cond_term_2_recalc) < diff * 1.1):
+                                print("GOT HERE!!!")
+                                new_pair = [order1, order2]
+                                bad_quad_maybe_fix[count_bad_quads].append(new_pair)
+                                print(1 / min_eig * exact_max_eig_recalc)
+                    count_bad_quads += 1
+                print("Condiditon Number Term 3: ")
+                print(cond_term_3)
+                print("Condiditon Number Term 4: ")
+                print(cond_term_4)
+                print("Condiditon Number Term 5: ")
+                print(cond_term_5)
                 print("~~~~~~~~~~~~~")
 
                 print("Trace inverse (A-opt): ")
@@ -311,16 +371,25 @@ for i in range(test_size):
                 count += 1
 
 
+print(A_psd)
+print(all_eig_vals, all_eig_vecs)
+
+print(bad_its)
+print(len(bad_its))
+
+print("overlap")
+print(bad_quad_maybe_fix)
+
 import matplotlib.pyplot as plt
 
 plt.plot(range(len(residuals_det)), np.log(abs(np.array(residuals_det))), color='orange', label='Difference from \'exact\' to F.D. (log det)')
 plt.plot(range(len(residuals_det)), np.log(abs(np.array(residuals_eig))), color='black', label='Difference from \'exact\' to F.D. (Min Eig)')
 plt.plot(range(len(residuals_det)), np.log(abs(np.array(residuals_k))), color='green', label='Difference from \'exact\' to F.D. (Condition Number)')
 plt.plot(range(len(residuals_det)), np.log(abs(np.array(residuals_trace))), color='blue', label='Difference from \'exact\' to F.D. (A-opt)')
-print(np.log(abs(np.array(residuals_det))))
-print(np.log(abs(np.array(residuals_eig))))
-print(np.log(abs(np.array(residuals_k))))
-print(np.log(abs(np.array(residuals_trace))))
+# print(np.log(abs(np.array(residuals_det))))
+# print(np.log(abs(np.array(residuals_eig))))
+# print(np.log(abs(np.array(residuals_k))))
+# print(np.log(abs(np.array(residuals_trace))))
 plt.ylabel("log-10(relative error)", fontsize=20)
 plt.legend()
 plt.tight_layout()

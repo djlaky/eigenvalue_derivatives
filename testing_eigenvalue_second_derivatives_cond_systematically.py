@@ -44,6 +44,10 @@ cond = np.linalg.cond(A_psd)
 permute = list(itertools.permutations([0, 1, 2, 3]))
 permute2 = list(itertools.permutations([0, 1, 2, 3]))
 
+print(len(permute))
+
+small_list = [1, ]
+
 print(A_psd_inv)
 
 residuals_det = []
@@ -56,8 +60,8 @@ count = 0
 # perturb each direction
 for order1 in permute:
     for order2 in permute:
-        for order3 in permute:
-            for order4 in permute:
+        for order3 in small_list:
+            for order4 in small_list:
                 residuals_k.append([])
                 store_orders.append([])
                 store_orders[-1].append(order1)
@@ -165,23 +169,23 @@ for order1 in permute:
                                                       # all_eig_vecs[j, curr_eig] * 
                                                       # min_eig_vec[0, k] * 
                                                       # all_eig_vecs[l, curr_eig]) / (min_eig - all_eig_vals[curr_eig])
-                                    # exact_eig += 1 * (min_eig_vec[0, i] * 
-                                                      # all_eig_vecs[j, curr_eig] * 
-                                                      # min_eig_vec[0, l] * 
-                                                      # all_eig_vecs[k, curr_eig]) / (min_eig - all_eig_vals[curr_eig])
-                                    # exact_eig += 1 * (min_eig_vec[0, k] * 
-                                                      # all_eig_vecs[i, curr_eig] * 
-                                                      # min_eig_vec[0, j] * 
-                                                      # all_eig_vecs[l, curr_eig]) / (min_eig - all_eig_vals[curr_eig])
+                                    exact_eig += 1 * (min_eig_vec[0, i] *
+                                                      all_eig_vecs[j, curr_eig] *
+                                                      min_eig_vec[0, l] *
+                                                      all_eig_vecs[k, curr_eig]) / (min_eig - all_eig_vals[curr_eig])
+                                    exact_eig += 1 * (min_eig_vec[0, k] *
+                                                      all_eig_vecs[i, curr_eig] *
+                                                      min_eig_vec[0, j] *
+                                                      all_eig_vecs[l, curr_eig]) / (min_eig - all_eig_vals[curr_eig])
                                     # Testing changing the minimum eigenvalue derivative as well.
-                                    exact_eig += 1 * (min_eig_vec[0, curr_quad[order1[0]]] * 
-                                                      all_eig_vecs[curr_quad[order3[1]], curr_eig] * 
-                                                      min_eig_vec[0, curr_quad[order3[2]]] * 
-                                                      all_eig_vecs[curr_quad[order3[3]], curr_eig]) / (min_eig - all_eig_vals[curr_eig])
-                                    exact_eig += 1 * (min_eig_vec[0, curr_quad[order4[0]]] * 
-                                                      all_eig_vecs[curr_quad[order4[1]], curr_eig] * 
-                                                      min_eig_vec[0, curr_quad[order4[2]]] * 
-                                                      all_eig_vecs[curr_quad[order4[3]], curr_eig]) / (min_eig - all_eig_vals[curr_eig])
+                                    # exact_eig += 1 * (min_eig_vec[0, curr_quad[order1[0]]] *
+                                    #                   all_eig_vecs[curr_quad[order3[1]], curr_eig] *
+                                    #                   min_eig_vec[0, curr_quad[order3[2]]] *
+                                    #                   all_eig_vecs[curr_quad[order3[3]], curr_eig]) / (min_eig - all_eig_vals[curr_eig])
+                                    # exact_eig += 1 * (min_eig_vec[0, curr_quad[order4[0]]] *
+                                    #                   all_eig_vecs[curr_quad[order4[1]], curr_eig] *
+                                    #                   min_eig_vec[0, curr_quad[order4[2]]] *
+                                    #                   all_eig_vecs[curr_quad[order4[3]], curr_eig]) / (min_eig - all_eig_vals[curr_eig])
                                     
                                 
                                 # Condition number formula was derived by myself
