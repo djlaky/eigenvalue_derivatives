@@ -6,10 +6,12 @@ import copy
 means_eig = []
 means_k = []
 means_a = []
+means_d = []
 
 stds_eig = []
 stds_k = []
 stds_a = []
+stds_d = []
 
 for sizes in range(9):
     # Specify what dimension matrix (test_size x test_size)
@@ -22,17 +24,20 @@ for sizes in range(9):
     means_eig_int = []
     means_k_int = []
     means_a_int = []
+    means_d_int = []
 
     # Generate random samples 100 times
-    for sample in range(10):
+    for sample in range(100):
         A = np.random.rand(test_size, test_size)
-        A_psd = np.dot(A, A.transpose())  # Positive semidefinte matrix A_psd
+        A_psd = np.dot(A, A.transpose()) + (test_size * 2) * np.ones(test_size)  # Positive semidefinte matrix A_psd
 
         # A_psd = A
 
         # Vectors and values for the original matrix
         vals_psd, vecs_psd = np.linalg.eig(A_psd)
         min_eig = min(vals_psd)
+
+        det = np.log(np.linalg.det(A_psd))
 
         cond = np.linalg.cond(A_psd)
 
@@ -41,6 +46,7 @@ for sizes in range(9):
         residuals = []
         residuals_k = []
         residuals_a = []
+        residuals_d = []
 
         # perturb each direction
         for i in range(test_size):
@@ -63,7 +69,7 @@ for sizes in range(9):
                 # Calculate the derivative matrix
                 dEigdM = min_eig_vec * np.transpose(min_eig_vec)
 
-                # Compare the FD value versus the "exact derivate"
+                # Compare the FD value versus the "exact derivative"
                 residuals.append((dEigdM[i, j] - (change_min_eig / eps)) / abs(dEigdM[i, j]))
 
                 # Test the condition number changes
@@ -90,19 +96,30 @@ for sizes in range(9):
 
                 # compare the FD versus "exact derivative" for trace
                 residuals_a.append((dAdM[i, j] - change_trace / eps) / abs(dAdM[i, j]))
+
+                # New determinant
+                new_det = np.log(np.linalg.det(A_psd_new))
+                diff_dets = new_det - det
+
+                # Calculating determinant change formula
+                dDdM = A_psd_new_inv
+                residuals_d.append((dDdM[i, j] - diff_dets / eps) / abs(dDdM[i, j]))
             
         # Calculate statistics on residual vectors
         residuals = np.log10(abs(np.array(residuals)))
         residuals_k = np.log10(abs(np.array(residuals_k)))
         residuals_a = np.log10(abs(np.array(residuals_a)))
+        residuals_d = np.log10(abs(np.array(residuals_d)))
 
         means_eig_int.append(np.mean(residuals))
         means_k_int.append(np.mean(residuals_k))
         means_a_int.append(np.mean(residuals_a))
+        means_d_int.append(np.mean(residuals_d))
 
     means_eig.append(np.mean(np.array(means_eig_int)))
     means_k.append(np.mean(np.array(means_k_int)))
     means_a.append(np.mean(np.array(means_a_int)))
+    means_d.append(np.mean(np.array(means_d_int)))
     print("Test_size: ")
     print(test_size)
     print("Means length: ")
@@ -111,12 +128,15 @@ for sizes in range(9):
     stds_eig.append(np.std(residuals))
     stds_k.append(np.std(residuals_k))
     stds_a.append(np.std(residuals_a))
+    stds_d.append(np.std(residuals_d))
 
 import matplotlib.pyplot as plt
 
-plt.errorbar(range(len(means_eig)), means_eig, yerr=stds_eig, color='black', fmt='o', label='Difference from \'exact\' to F.D. (Min Eig)')
-plt.errorbar(range(len(means_k)), means_k, yerr=stds_k, color='green', fmt='o', label='Difference from \'exact\' to F.D. (Condition Number)')
-plt.errorbar(range(len(means_a)), means_a, yerr=stds_a, color='orange', fmt='o', label='Difference from \'exact\' to F.D. (A-opt)')
+plt.errorbar(range(len(means_eig)), means_eig, yerr=stds_eig, capsize=3, color='black', fmt='o', label='Difference from \'exact\' to F.D. (Min Eig)')
+plt.errorbar(range(len(means_k)), means_k, yerr=stds_k, capsize=3, color='green', fmt='o', label='Difference from \'exact\' to F.D. (Condition Number)')
+plt.errorbar(range(len(means_a)), means_a, yerr=stds_a, capsize=3, color='orange', fmt='o', label='Difference from \'exact\' to F.D. (A-opt)')
+plt.errorbar(range(len(means_d)), means_d, yerr=stds_d, capsize=3, color='blue', fmt='o', label='Difference from \'exact\' to F.D. (D-opt)')
+
 plt.ylabel("log-10(relative error)", fontsize=20)
 plt.legend()
 plt.tight_layout()
