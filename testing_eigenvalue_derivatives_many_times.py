@@ -5,11 +5,13 @@ import copy
 # Set up stat trackers for the 100 random samples
 means_eig = []
 means_k = []
+means_logk = []
 means_a = []
 means_d = []
 
 stds_eig = []
 stds_k = []
+stds_logk = []
 stds_a = []
 stds_d = []
 
@@ -23,6 +25,7 @@ for sizes in range(9):
     # Set up stat trackers for the 100 random samples
     means_eig_int = []
     means_k_int = []
+    means_logk_int = []
     means_a_int = []
     means_d_int = []
 
@@ -45,6 +48,7 @@ for sizes in range(9):
 
         residuals = []
         residuals_k = []
+        residuals_logk = []
         residuals_a = []
         residuals_d = []
 
@@ -80,13 +84,16 @@ for sizes in range(9):
                 new_cond = np.linalg.cond(A_psd_new)
 
                 diff_conds = new_cond - cond
+                diff_logconds = np.log(new_cond) - np.log(cond)
 
                 # Calculating the condition number change formula
                 dEigmaxdM = max_eig_vec * np.transpose(max_eig_vec)
                 dKdM = 1 / vals[min_eig_loc] * (dEigmaxdM - cond * dEigdM)
+                dlnKdM = 1 / vals[max_eig_loc] * dEigmaxdM - 1 / vals[min_eig_loc] * dEigdM
 
                 # Compare the FD value versus the "exact derivative"
                 residuals_k.append((dKdM[i, j] - diff_conds / eps) / abs(dKdM[i, j]))
+                residuals_logk.append((dlnKdM[i, j] - diff_logconds / eps) / abs(dlnKdM[i, j]))
 
                 # Calculating the change in trace
                 change_trace = np.trace(A_psd_new_inv) - trace_inv
@@ -108,16 +115,19 @@ for sizes in range(9):
         # Calculate statistics on residual vectors
         residuals = np.log10(abs(np.array(residuals)))
         residuals_k = np.log10(abs(np.array(residuals_k)))
+        residuals_logk = np.log10(abs(np.array(residuals_logk)))
         residuals_a = np.log10(abs(np.array(residuals_a)))
         residuals_d = np.log10(abs(np.array(residuals_d)))
 
         means_eig_int.append(np.mean(residuals))
         means_k_int.append(np.mean(residuals_k))
+        means_logk_int.append(np.mean(residuals_logk))
         means_a_int.append(np.mean(residuals_a))
         means_d_int.append(np.mean(residuals_d))
 
     means_eig.append(np.mean(np.array(means_eig_int)))
     means_k.append(np.mean(np.array(means_k_int)))
+    means_logk.append(np.mean(np.array(means_logk_int)))
     means_a.append(np.mean(np.array(means_a_int)))
     means_d.append(np.mean(np.array(means_d_int)))
     print("Test_size: ")
@@ -127,6 +137,7 @@ for sizes in range(9):
 
     stds_eig.append(np.std(residuals))
     stds_k.append(np.std(residuals_k))
+    stds_logk.append(np.std(residuals_logk))
     stds_a.append(np.std(residuals_a))
     stds_d.append(np.std(residuals_d))
 
@@ -134,6 +145,7 @@ import matplotlib.pyplot as plt
 
 plt.errorbar(range(len(means_eig)), means_eig, yerr=stds_eig, capsize=3, color='black', fmt='o', label='Difference from \'exact\' to F.D. (Min Eig)')
 plt.errorbar(range(len(means_k)), means_k, yerr=stds_k, capsize=3, color='green', fmt='o', label='Difference from \'exact\' to F.D. (Condition Number)')
+plt.errorbar(range(len(means_k)), means_logk, yerr=stds_logk, capsize=3, color='purple', fmt='o', label='Difference from \'exact\' to F.D. (Condition Number)')
 plt.errorbar(range(len(means_a)), means_a, yerr=stds_a, capsize=3, color='orange', fmt='o', label='Difference from \'exact\' to F.D. (A-opt)')
 plt.errorbar(range(len(means_d)), means_d, yerr=stds_d, capsize=3, color='blue', fmt='o', label='Difference from \'exact\' to F.D. (D-opt)')
 

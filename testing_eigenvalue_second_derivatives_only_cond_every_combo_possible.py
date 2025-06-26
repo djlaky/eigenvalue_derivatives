@@ -3,6 +3,8 @@ import copy
 import itertools
 import time as t
 
+# from testing_eigenvalue_derivatives_many_times import residuals_logk
+
 
 def get_eigenvalue_and_vector(M, option='min'):
     vals, vecs = np.linalg.eig(M)
@@ -54,6 +56,7 @@ small_list = [1, ]
 residuals_det = []
 residuals_eig = []
 residuals_k = []
+residuals_logk = []
 store_orders = []
 i_def = 0
 count = 0
@@ -72,6 +75,7 @@ for order1 in permute:  # Second Derivative one, one (max eig)
                     for order6 in small_list:  # First Derivative two (cond term 3)
                         for order7 in small_list:  # First Derivative three (cond term 4)
                             residuals_k.append([])
+                            residuals_logk.append([])
                             store_orders.append([])
                             store_orders[-1].append(order1)
                             store_orders[-1].append(order2)
@@ -136,6 +140,10 @@ for order1 in permute:  # Second Derivative one, one (max eig)
                                             #####################################
                                             # Calculating the FD approximations
                                             hess_cond = (cond1 - cond2 - cond3 + cond4) / (4 * eps**2)
+                                            hess_log_cond = (
+                                                                    np.log(cond1) - np.log(cond2) - np.log(
+                                                                cond3) + np.log(cond4)
+                                                            ) / (4 * eps ** 2)
 
                                             #      End FD approximations
                                             #####################################
@@ -246,6 +254,28 @@ for order1 in permute:  # Second Derivative one, one (max eig)
                                             # Combine everything at the end
                                             exact_cond = -cond_term_1 + cond_term_2 - cond_term_3 + cond_term_4 - cond_term_5
 
+                                            # Computing log condition number exact
+                                            log_cond_term_1 = 1 / max_eig * exact_max_eig
+                                            log_cond_term_2 = (
+                                                    1
+                                                    / (max_eig ** 2)
+                                                    * (max_eig_vec[0, l] * max_eig_vec[0, k])
+                                                    * (max_eig_vec[0, j] * max_eig_vec[0, i])
+                                            )
+                                            log_cond_term_3 = 1 / min_eig * exact_eig
+                                            log_cond_term_4 = (
+                                                    1
+                                                    / (min_eig ** 2)
+                                                    * (min_eig_vec[0, l] * min_eig_vec[0, k])
+                                                    * (min_eig_vec[0, j] * min_eig_vec[0, i])
+                                            )
+                                            exact_log_cond = (
+                                                    log_cond_term_1
+                                                    - log_cond_term_2
+                                                    - log_cond_term_3
+                                                    + log_cond_term_4
+                                            )
+
                                             # End exact Hessian value computation
                                             ######################################
 
@@ -254,6 +284,7 @@ for order1 in permute:  # Second Derivative one, one (max eig)
                                             bad_quads = [(0, 1, 0, 1), (0, 1, 1, 0), (1, 0, 0, 1), (1, 0, 1, 0)]
                                             if curr_quad in bad_quads:
                                                 residuals_k[-1].append((exact_cond - hess_cond) / abs(exact_cond))
+                                                residuals_logk[-1].append((exact_log_cond - hess_log_cond) / abs(log_cond_term_1))
 
                                             # End residual computation!!!
                                             ######################################
@@ -290,4 +321,32 @@ print(store_orders[i_def])
 print(np.log(abs(np.array(residuals_k[i_def]))))
 print("Best mins is: ")
 print(np.log(abs(np.array(residuals_k[i_min_max]))))
+print(store_orders[i_min_max])
+
+print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+
+min_sum = 0
+min_max = 0
+i_min_sum = 0
+i_min_max = 0
+for i in range(len(residuals_k)):
+    curr_sum = sum(np.log(abs(np.array(residuals_logk[i]))))
+    curr_max = max(np.log(abs(np.array(residuals_logk[i]))))
+    if curr_sum < min_sum:
+        min_sum = curr_sum
+        i_min_sum = i
+    if curr_max < min_max:
+        min_max = curr_max
+        i_min_max = i
+
+print("Min sum is: {:.4f}".format(min_sum))
+print("Min sum orders are: ")
+print(store_orders[i_min_sum])
+print("Residuals from min: ")
+print(np.log(abs(np.array(residuals_logk[i_min_sum]))))
+print("Current best is: ")
+print(store_orders[i_def])
+print(np.log(abs(np.array(residuals_logk[i_def]))))
+print("Best mins is: ")
+print(np.log(abs(np.array(residuals_logk[i_min_max]))))
 print(store_orders[i_min_max])

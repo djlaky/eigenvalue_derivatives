@@ -17,6 +17,7 @@ cond = np.linalg.cond(A_psd)
 
 residuals = []
 residuals_k = []
+residuals_logk = []
 
 # perturb each direction
 for i in range(test_size):
@@ -64,9 +65,12 @@ for i in range(test_size):
 
         diff_conds = new_cond - cond
 
+        diff_logconds = np.log(new_cond) - np.log(cond)
+
         # Calculating the condition number change formula
         dEigmaxdM = max_eig_vec * np.transpose(max_eig_vec)
         dKdM = 1 / vals[min_eig_loc] * (dEigmaxdM - cond * dEigdM)
+        dlnKdM = 1 / vals[max_eig_loc] * dEigmaxdM - 1 / vals[min_eig_loc] * dEigdM
 
         # Compare the FD value versus the "exact derivative"
         print("dKdM component: ")
@@ -76,7 +80,16 @@ for i in range(test_size):
         print("Overall difference between both figures: ")
         print((dKdM[i, j] - diff_conds / eps) / abs(dKdM[i, j]))
 
+        # Compare the FD value versus the "exact derivative"
+        print("dlnKdM component: ")
+        print(dlnKdM[i, j])
+        print("Change in condition number, finite difference: ")
+        print(diff_logconds / eps)
+        print("Overall difference between both figures: ")
+        print((dlnKdM[i, j] - diff_logconds / eps) / abs(dlnKdM[i, j]))
+
         residuals_k.append((dKdM[i, j] - diff_conds / eps) / abs(dKdM[i, j]))
+        residuals_logk.append((dlnKdM[i, j] - diff_logconds / eps) / abs(dlnKdM[i, j]))
 
 
 import matplotlib.pyplot as plt
@@ -84,8 +97,10 @@ import matplotlib.pyplot as plt
 
 plt.plot(range(len(residuals)), np.log(abs(np.array(residuals))), color='black', label='Difference from \'exact\' to F.D. (Min Eig)')
 plt.plot(range(len(residuals)), np.log(abs(np.array(residuals_k))), color='green', label='Difference from \'exact\' to F.D. (Condition Number)')
+plt.plot(range(len(residuals)), np.log(abs(np.array(residuals_logk))), color='purple', label='Difference from \'exact\' to F.D. (Log Condition Number)')
 print(np.log(abs(np.array(residuals))))
 print(np.log(abs(np.array(residuals_k))))
+print(np.log(abs(np.array(residuals_logk))))
 plt.ylabel("log-10(relative error)", fontsize=20)
 plt.legend()
 plt.tight_layout()
