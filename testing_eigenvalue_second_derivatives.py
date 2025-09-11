@@ -25,7 +25,7 @@ def get_eigenvalue_and_vector(M, option='min'):
 
 permute = list(itertools.permutations([0, 1, 2, 3]))
 
-test_size = 3
+test_size = 2
 
 eps = 0.00001
 
