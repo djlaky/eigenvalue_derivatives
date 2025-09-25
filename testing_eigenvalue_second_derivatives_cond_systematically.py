@@ -281,6 +281,8 @@ min_sum = 0
 min_max = 0
 i_min_sum = 0
 i_min_max = 0
+min_6 = 0
+i_min_6 = 0
 
 for i in range(len(residuals_k)):
     curr_sum = sum(np.log(abs(np.array(residuals_k[i]))))
@@ -291,6 +293,9 @@ for i in range(len(residuals_k)):
     if curr_max < min_max:
         min_max = curr_max
         i_min_max = i
+    if min_6 > np.log(abs(np.array(residuals_k[i][5]))):
+        min_6 = np.log(abs(np.array(residuals_k[i][5])))
+        i_min_6 = i
 
 print("Min sum is: {:.4f}".format(min_sum))
 print("Min sum orders are: ")
@@ -303,3 +308,6 @@ print(np.log(abs(np.array(residuals_k[i_def]))))
 print("Best mins is: ")
 print(np.log(abs(np.array(residuals_k[i_min_max]))))
 print(store_orders[i_min_max])
+print("Best 6th-index is: ")
+print(min_6)
+print(store_orders[i_min_6])

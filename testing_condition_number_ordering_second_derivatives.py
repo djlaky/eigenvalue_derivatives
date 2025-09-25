@@ -126,6 +126,7 @@ for i in range(test_size):
                 cond3 = np.linalg.cond(A_psd_new_3)
                 cond4 = np.linalg.cond(A_psd_new_4)
 
+                print("Cond with conds")
                 print(cond1, cond2, cond3, cond4)
 
                 # Calculate eigenvalues and vectors (E-opt)
@@ -148,6 +149,7 @@ for i in range(test_size):
 
                 print(min_eig1, min_eig2, min_eig3, min_eig4)
 
+                print("Cond with eigs")
                 print(
                     max_eig1 / min_eig1,
                     max_eig2 / min_eig2,
@@ -164,6 +166,13 @@ for i in range(test_size):
                 trace3 = np.trace(inv3)
                 inv4 = np.linalg.inv(A_psd_new_4)
                 trace4 = np.trace(inv4)
+
+                # REMOVE?
+                cond1 = max_eig1 / min_eig1
+                cond2 = max_eig2 / min_eig2
+                cond3 = max_eig3 / min_eig3
+                cond4 = max_eig4 / min_eig4
+                # REMOVE?
 
                 #####################################
                 # Calculating the FD approximations
@@ -301,36 +310,36 @@ for i in range(test_size):
                     #                       max_eig_vec[0, k] *
                     #                       all_eig_vecs[l, curr_eig]) / (max_eig - all_eig_vals[curr_eig])
                     # Somehow the derivative is not correct, maybe?
-                    # exact_max_eig += (
-                    #     1
-                    #     * (
-                    #         max_eig_vec[0, i]
-                    #         * all_eig_vecs[j, curr_eig]
-                    #         * max_eig_vec[0, l]
-                    #         * all_eig_vecs[k, curr_eig]
-                    #     )
-                    #     / (max_eig - all_eig_vals[curr_eig])
-                    # )
-                    # exact_max_eig += (
-                    #     1
-                    #     * (
-                    #         max_eig_vec[0, k]
-                    #         * all_eig_vecs[i, curr_eig]
-                    #         * max_eig_vec[0, j]
-                    #         * all_eig_vecs[l, curr_eig]
-                    #     )
-                    #     / (max_eig - all_eig_vals[curr_eig])
-                    # )
                     exact_max_eig += (
-                        2
+                        1
                         * (
                             max_eig_vec[0, i]
                             * all_eig_vecs[j, curr_eig]
-                            * max_eig_vec[0, k]
+                            * max_eig_vec[0, l]
+                            * all_eig_vecs[k, curr_eig]
+                        )
+                        / (max_eig - all_eig_vals[curr_eig])
+                    )
+                    exact_max_eig += (
+                        1
+                        * (
+                            max_eig_vec[0, k]
+                            * all_eig_vecs[i, curr_eig]
+                            * max_eig_vec[0, j]
                             * all_eig_vecs[l, curr_eig]
                         )
                         / (max_eig - all_eig_vals[curr_eig])
                     )
+                    # exact_max_eig += (
+                    #     2
+                    #     * (
+                    #         max_eig_vec[0, i]
+                    #         * all_eig_vecs[j, curr_eig]
+                    #         * max_eig_vec[0, k]
+                    #         * all_eig_vecs[l, curr_eig]
+                    #     )
+                    #     / (max_eig - all_eig_vals[curr_eig])
+                    # )
 
                 cond_term_2 = 1 / min_eig * exact_max_eig
 
@@ -640,6 +649,44 @@ for i in range(test_size):
                 its[count] = [i, j, k, l]
                 abs_residuals_logcond[count] = exact_log_cond - hess_log_cond
 
+                if i == 1 and j == 0 and k == 1 and l == 0:
+                    lots_of_stuff = [0,] * 24 * 24
+                    count_cond_log = 0
+                    for order1 in permute:
+                        for order2 in permute:
+                            exact_max_eig_ = 0
+                            exact_eig_ = 0
+                            for curr_eig in range(len(all_eig_vals)):
+                                if curr_eig == max_eig_loc:
+                                    continue
+                                exact_max_eig_ += 1 * (max_eig_vec[0, curr_quad[order1[0]]] *
+                                                      all_eig_vecs[curr_quad[order1[1]], curr_eig] *
+                                                      max_eig_vec[0, curr_quad[order1[2]]] *
+                                                      all_eig_vecs[curr_quad[order1[3]], curr_eig]) / (
+                                                             max_eig - all_eig_vals[curr_eig])
+                                exact_max_eig_ += 1 * (max_eig_vec[0, curr_quad[order2[0]]] *
+                                                      all_eig_vecs[curr_quad[order2[1]], curr_eig] *
+                                                      max_eig_vec[0, curr_quad[order2[2]]] *
+                                                      all_eig_vecs[curr_quad[order2[3]], curr_eig]) / (
+                                                             max_eig - all_eig_vals[curr_eig])
+                            for curr_eig in range(len(all_eig_vals)):
+                                if curr_eig == min_eig_loc:
+                                    continue
+                                exact_eig_ += 1 * (min_eig_vec[0, curr_quad[order1[0]]] *
+                                                  all_eig_vecs[curr_quad[order1[1]], curr_eig] *
+                                                  min_eig_vec[0, curr_quad[order1[2]]] *
+                                                  all_eig_vecs[curr_quad[order1[3]], curr_eig]) / (
+                                                         min_eig - all_eig_vals[curr_eig])
+                                exact_eig_ += 1 * (min_eig_vec[0, curr_quad[order2[0]]] *
+                                                  all_eig_vecs[curr_quad[order2[1]], curr_eig] *
+                                                  min_eig_vec[0, curr_quad[order2[2]]] *
+                                                  all_eig_vecs[curr_quad[order2[3]], curr_eig]) / (
+                                                         min_eig - all_eig_vals[curr_eig])
+
+                            lots_of_stuff[count_cond_log] = [order1, order2, exact_max_eig_ / max_eig - exact_max_eig / max_eig - exact_eig_ / min_eig + exact_eig / min_eig,]
+                            count_cond_log += 1
+
+
                 count += 1
 
 
@@ -700,8 +747,11 @@ plt.legend()
 plt.tight_layout()
 plt.show()
 
-np.set_printoptions(legacy='1.25')
-for i in range(len(save_log_cond_residuals)):
-    print(its[i])
-    print(abs_residuals_logcond[i])
-    print(save_log_cond_residuals[i])
+# np.set_printoptions(legacy='1.25')
+# for i in range(len(save_log_cond_residuals)):
+#     print(its[i])
+#     print(abs_residuals_logcond[i])
+#     print(save_log_cond_residuals[i])
+#
+# for j in range(len(lots_of_stuff)):
+#     print(lots_of_stuff[j])
