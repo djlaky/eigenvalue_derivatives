@@ -143,13 +143,15 @@ for sizes in range(9):
 
 import matplotlib.pyplot as plt
 
-plt.errorbar(range(len(means_eig)), means_eig, yerr=stds_eig, capsize=3, color='black', fmt='o', label='Difference from \'exact\' to F.D. (Min Eig)')
-plt.errorbar(range(len(means_k)), means_k, yerr=stds_k, capsize=3, color='green', fmt='o', label='Difference from \'exact\' to F.D. (Condition Number)')
-plt.errorbar(range(len(means_k)), means_logk, yerr=stds_logk, capsize=3, color='purple', fmt='o', label='Difference from \'exact\' to F.D. (Condition Number)')
-plt.errorbar(range(len(means_a)), means_a, yerr=stds_a, capsize=3, color='orange', fmt='o', label='Difference from \'exact\' to F.D. (A-opt)')
-plt.errorbar(range(len(means_d)), means_d, yerr=stds_d, capsize=3, color='blue', fmt='o', label='Difference from \'exact\' to F.D. (D-opt)')
+plt.errorbar(range(2, len(means_eig) + 2), means_eig, yerr=stds_eig, capsize=3, color='black', fmt='o', label='Difference from \'exact\' to F.D. (Min Eig)')
+plt.errorbar(range(2, len(means_k) + 2), means_k, yerr=stds_k, capsize=3, color='green', fmt='o', label='Difference from \'exact\' to F.D. (Condition Number)')
+plt.errorbar(range(2, len(means_k) + 2), means_logk, yerr=stds_logk, capsize=3, color='purple', fmt='o', label='Difference from \'exact\' to F.D. (Log Condition Number)')
+plt.errorbar(range(2, len(means_a) + 2), means_a, yerr=stds_a, capsize=3, color='orange', fmt='o', label='Difference from \'exact\' to F.D. (A-opt)')
+plt.errorbar(range(2, len(means_d) + 2), means_d, yerr=stds_d, capsize=3, color='blue', fmt='o', label='Difference from \'exact\' to F.D. (D-opt)')
 
 plt.ylabel("log-10(relative error)", fontsize=20)
+plt.xlabel("Square dimension of Matrices", fontsize=20)
 plt.legend()
 plt.tight_layout()
+plt.savefig("testing_first_derivatives_many_times.png", format="png", dpi=600)
 plt.show()
